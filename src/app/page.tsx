@@ -1,4 +1,5 @@
 import CardHome from "@/components/card-home";
+import DiscordPresence from "@/components/discord-presence";
 import WorkedFor from "@/components/worked-for";
 import FloatingNav from "@/components/navbar";
 import Hero from "@/components/hero";
@@ -94,6 +95,8 @@ export default function Home() {
             <CardHome />
           </div>
         </section>
+
+        <DiscordPresence />
 
         <Ticker
           reverse
