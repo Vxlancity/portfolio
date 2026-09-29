@@ -77,6 +77,7 @@ export default function DiscordPresence() {
   useEffect(() => {
     let socket: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
     let stopped = false;
 
     const loadInitial = async () => {
@@ -97,9 +98,12 @@ export default function DiscordPresence() {
       socket.onopen = () => setConnected(true);
       socket.onclose = () => {
         setConnected(false);
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        heartbeatTimer = undefined;
         if (!stopped) reconnectTimer = setTimeout(connect, 5000);
       };
       socket.onerror = () => setConnected(false);
+
       socket.onmessage = (event) => {
         try {
           const packet = JSON.parse(event.data);
@@ -111,6 +115,14 @@ export default function DiscordPresence() {
                 d: { subscribe_to_id: DISCORD_USER_ID },
               }),
             );
+
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+            const interval = Number(packet.d?.heartbeat_interval) || 30000;
+            heartbeatTimer = setInterval(() => {
+              if (socket?.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ op: 3, d: null }));
+              }
+            }, interval);
           }
 
           if (
@@ -132,6 +144,7 @@ export default function DiscordPresence() {
     return () => {
       stopped = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
       socket?.close();
     };
   }, []);
