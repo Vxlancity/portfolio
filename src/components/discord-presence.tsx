@@ -19,6 +19,7 @@ type Spotify = {
   song?: string;
   artist?: string;
   album?: string;
+  track_id?: string;
   album_art_url?: string;
 };
 
@@ -153,13 +154,17 @@ export default function DiscordPresence() {
   const status = presence?.discord_status ?? "offline";
   const avatar = useMemo(() => avatarUrl(user), [user]);
   const banner = useMemo(() => bannerUrl(user), [user]);
+  const spotify = presence?.spotify ?? null;
   const activities = (presence?.activities ?? []).filter(
-    (activity) => activity.type !== 4,
+    (activity) => activity.type !== 4 && !(spotify && activity.type === 2),
   );
   const customStatus = (presence?.activities ?? []).find(
     (activity) => activity.type === 4,
   );
   const mainActivity = activities[0];
+  const spotifyUrl = spotify?.track_id
+    ? `https://open.spotify.com/track/${spotify.track_id}`
+    : null;
 
   return (
     <section id="discord" className="discord-presence" data-gsap="fade-up">
@@ -240,12 +245,21 @@ export default function DiscordPresence() {
                 </div>
               )}
 
-              {presence?.spotify && (
-                <div className="discord-detail-card discord-spotify">
-                  {presence.spotify.album_art_url && (
+              {spotify && (
+                <a
+                  className={`discord-detail-card discord-spotify discord-spotify-link ${!mainActivity ? "discord-detail-card-wide" : ""}`}
+                  href={spotifyUrl ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Spotify öffnen: ${spotify.song ?? "aktueller Song"}`}
+                  onClick={(event) => {
+                    if (!spotifyUrl) event.preventDefault();
+                  }}
+                >
+                  {spotify.album_art_url && (
                     <img
-                      src={presence.spotify.album_art_url}
-                      alt="Spotify Album Cover"
+                      src={spotify.album_art_url}
+                      alt=""
                       className="discord-album-art"
                     />
                   )}
@@ -253,18 +267,18 @@ export default function DiscordPresence() {
                     <span className="discord-detail-label">
                       <span className="discord-spotify-dot" /> Spotify
                     </span>
-                    <h3>{presence.spotify.song ?? "Unbekannter Titel"}</h3>
-                    <p>{presence.spotify.artist ?? "Unbekannter Artist"}</p>
+                    <h3>{spotify.song ?? "Unbekannter Titel"}</h3>
+                    <p>{spotify.artist ?? "Unbekannter Artist"}</p>
                     <span className="discord-detail-muted">
                       {presence.spotify.album ?? ""}
                     </span>
                   </div>
-                </div>
+                </a>
               )}
             </div>
           )}
 
-          {!mainActivity && !presence?.spotify && (
+          {!mainActivity && !spotify && (
             <div className="discord-idle-card">
               <span className="discord-detail-label">Activity</span>
               <p>Gerade keine aktive Rich Presence.</p>
