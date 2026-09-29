@@ -270,7 +270,7 @@ export default function DiscordPresence() {
                     <h3>{spotify.song ?? "Unbekannter Titel"}</h3>
                     <p>{spotify.artist ?? "Unbekannter Artist"}</p>
                     <span className="discord-detail-muted">
-                      {presence.spotify.album ?? ""}
+                      {spotify.album ?? ""}
                     </span>
                   </div>
                 </a>
